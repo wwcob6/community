@@ -1,8 +1,12 @@
 package com.sys.community;
 
+import com.sys.community.dao.CommentMapper;
 import com.sys.community.dao.DiscussPostMapper;
+import com.sys.community.dao.LoginTicketMapper;
 import com.sys.community.dao.UserMapper;
+import com.sys.community.entity.Comment;
 import com.sys.community.entity.DiscussPost;
+import com.sys.community.entity.LoginTicket;
 import com.sys.community.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +19,13 @@ import java.util.List;
 @SpringBootTest
 @ContextConfiguration(classes =  CommunityApplication.class)
 public class MapperTests {
+
+    @Autowired
+    private CommentMapper commentMapper;
+
+    @Autowired
+    private LoginTicketMapper loginTicketMapper;
+
     @Autowired
     private UserMapper userMapper;
     
@@ -56,4 +67,22 @@ public class MapperTests {
         int rows = discussPostMapper.selectDiscussPostRows(0);
         System.out.println(rows);
     }
+
+    @Test
+    public void loginTicketTest() {
+        LoginTicket loginTicket = loginTicketMapper.selectByTicket("abc");
+        System.out.println(loginTicket);
+
+        loginTicketMapper.updateStatus("abc",0);
+        System.out.println(loginTicketMapper.selectByTicket("abc"));
+    }
+    @Test
+    public void commentTest() {
+        List<Comment> comments = commentMapper.selectCommentsByEntity(1, 275, 0, Integer.MAX_VALUE);
+        for (Comment comment : comments) {
+            System.out.println(comment);
+            // System.out.println(userMapper.selectById(comment.getUserId()));
+        }
+    }
+
 }
