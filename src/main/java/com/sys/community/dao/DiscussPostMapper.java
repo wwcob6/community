@@ -8,7 +8,7 @@ import java.util.List;
 @Mapper
 public interface DiscussPostMapper {
 
-    List<DiscussPost> selectDiscussPost(int userId, int offset, int limit);
+    List<DiscussPost> selectDiscussPost(int userId, int offset, int limit, int orderMode);
 
     int selectDiscussPostRows(@Param("userId") int userId);
 
@@ -16,6 +16,7 @@ public interface DiscussPostMapper {
             "insert into discuss_post(user_id, title, content, type, status, create_time, comment_count, score)",
             "values(#{userId},#{title},#{content},#{type}, #{status}, #{createTime}, #{commentCount}, #{score})"
     })
+    @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertDiscussPost(DiscussPost discussPost);
 
     @Select({
@@ -31,4 +32,25 @@ public interface DiscussPostMapper {
             "where id = #{id}"
     })
     int updateCommentCount(int id, int commentCount);
+
+    @Update({
+            "update discuss_post",
+            "set type = #{type}",
+            "where id = #{id}"
+    })
+    int updateType(int id, int type);
+
+    @Update({
+            "update discuss_post",
+            "set status = #{status}",
+            "where id = #{id}"
+    })
+    int updateStatus(int id, int status);
+
+    @Update({
+            "update discuss_post",
+            "set score = #{score}",
+            "where id = #{id}"
+    })
+    int updateScore(int id, double score);
 }

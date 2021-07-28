@@ -40,4 +40,21 @@ public interface CommentMapper {
             "where id = #{entityId}"
     })
     Comment selectCommentById(int entityId);
+
+    @Select({
+            "select count(id)",
+            "from comment",
+            "where status=0",
+            "and userId = #{userId}"
+    })
+    int selectCommentCountByUserId(int userId);
+
+    @Select({
+            "select id,user_id,entity_type,entity_id,target_id,content,status,create_time",
+            "from comment",
+            "where status = 0 and userId = #{userId}",
+            "order by create_time asc",
+            "limit #{offset}, #{limit}"
+    })
+    List<Comment> selectCommentsByUserId(int userId, int offset, int limit);
 }

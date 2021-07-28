@@ -2,10 +2,10 @@ package com.sys.community.controller;
 
 
 import com.sys.community.annotation.LoginRequired;
+import com.sys.community.entity.DiscussPost;
+import com.sys.community.entity.Page;
 import com.sys.community.entity.User;
-import com.sys.community.service.FollowService;
-import com.sys.community.service.LikeService;
-import com.sys.community.service.UserService;
+import com.sys.community.service.*;
 import com.sys.community.util.CommunityConstant;
 import com.sys.community.util.CommunityUtil;
 import com.sys.community.util.HostHolder;
@@ -19,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletInputStream;
@@ -27,6 +28,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/user")
@@ -54,6 +59,12 @@ public class UserController implements CommunityConstant {
 
     @Autowired
     private FollowService followService;
+
+    @Autowired
+    private DiscussPostService discussPostService;
+
+    @Autowired
+    private CommentService commentService;
 
     @LoginRequired
     @RequestMapping(path = "/setting", method = RequestMethod.GET)
@@ -144,7 +155,8 @@ public class UserController implements CommunityConstant {
 
     // 个人主页
     @RequestMapping(path = "/profile/{userId}", method = RequestMethod.GET)
-    public String getProfilePage(@PathVariable("userId") int userId, Model model) {
+    public String getProfilePage(@PathVariable("userId") int userId, Model model,
+                                 @RequestParam(name = "orderMode", defaultValue = "0") int orderMode) {
         User user = userService.findUserById(userId);
         if (user == null) {
             throw new RuntimeException("该用户不存在");
@@ -166,6 +178,67 @@ public class UserController implements CommunityConstant {
             hasFollowed = followService.hasFollowed(hostHolder.getUser().getId(), ENTITY_TYPE_USER, userId);
         }
         model.addAttribute("hasFollowed", hasFollowed);
+        model.addAttribute("orderMode", orderMode);
         return "/site/profile";
+    }
+    @RequestMapping(path = "/profile/{userId}/post", method = RequestMethod.GET)
+    public String getMypost(Model model, Page page, @PathVariable("userId") int userId,
+                            @RequestParam(name = "orderMode", defaultValue = "1") int orderMode) {
+        // 方法调用钱，springmvc会自动实例化model和page，并将page注入model
+        page.setRows(discussPostService.findDiscussPostRows(userId));
+        page.setPath("/index/" + userId + "/post?orderMode=" + orderMode);
+        User userr = userService.findUserById(userId);
+        List<DiscussPost> list = discussPostService.findDiscussPost(userId, page.getOffset(), page.getLimit(), 0);
+        List<Map<String, Object>> discussPosts = new ArrayList<>();
+        if (list != null){
+            for (DiscussPost discussPost : list){
+                Map<String, Object> map = new HashMap<>();
+                map.put("post", discussPost);
+                User user = userService.findUserById(discussPost.getUserId());
+                map.put("user", user);
+
+                long likeCount = likeService.findEntityLikeCount(ENTITY_TYPE_POST, discussPost.getId());
+                map.put("likeCount", likeCount);
+
+                discussPosts.add(map);
+            }
+        }
+        int postCount = discussPostService.findDiscussPostRows(userId);
+        model.addAttribute("postCount", postCount);
+        // 用户
+        model.addAttribute("user", userr);
+        model.addAttribute("discussPosts",discussPosts);
+        model.addAttribute("orderMode", orderMode);
+        return "/site/my-post";
+    }
+    @RequestMapping(path = "/profile/{userId}/comment", method = RequestMethod.GET)
+    public String getMyComment(Model model, Page page, @PathVariable("userId") int userId,
+                            @RequestParam(name = "orderMode", defaultValue = "2") int orderMode) {
+        // 方法调用钱，springmvc会自动实例化model和page，并将page注入model
+        page.setRows(commentService.findCountByEntity(ENTITY_TYPE_POST, userId));
+        page.setPath("/index/" + userId + "/comment?orderMode=" + orderMode);
+        User userr = userService.findUserById(userId);
+        List<DiscussPost> list = discussPostService.findDiscussPost(userId, page.getOffset(), page.getLimit(), 0);
+        List<Map<String, Object>> discussPosts = new ArrayList<>();
+        if (list != null){
+            for (DiscussPost discussPost : list){
+                Map<String, Object> map = new HashMap<>();
+                map.put("post", discussPost);
+                User user = userService.findUserById(discussPost.getUserId());
+                map.put("user", user);
+
+                long likeCount = likeService.findEntityLikeCount(ENTITY_TYPE_POST, discussPost.getId());
+                map.put("likeCount", likeCount);
+
+                discussPosts.add(map);
+            }
+        }
+        int postCount = discussPostService.findDiscussPostRows(userId);
+        model.addAttribute("postCount", postCount);
+        // 用户
+        model.addAttribute("user", userr);
+        model.addAttribute("discussPosts",discussPosts);
+        model.addAttribute("orderMode", orderMode);
+        return "/site/my-post";
     }
 }
