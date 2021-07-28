@@ -65,18 +65,18 @@
 				<div class="position-relative">
 					<ul class="nav nav-tabs">
 						<li class="nav-item">
-							<a th:class="|nav-link ${orderMode==0?'active':''}|"
+							<a class="nav-link"
 							   th:href="@{|/user/profile/${user.id}|}">个人信息</a>
 						</li>
 						<li class="nav-item">
-							<a th:class="|nav-link ${orderMode==1?'active':''}|"
+							<a class="nav-link active"
 							   th:href="@{|/user/profile/${user.id}/post|}">帖子</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="my-reply.html">回复</a>
+							<a class="nav-link" th:href="@{|/user/profile/${user.id}/comment|}">回复</a>
 						</li>
 					</ul>
-					<a href="profile.html" class="text-muted position-absolute rt-0">返回个人主页&gt;</a>
+					<a th:if="${loginUser!=null}" th:href="@{|/user/profile/${loginUser.id}|}" class="text-muted position-absolute rt-0">返回个人主页&gt;</a>
 				</div>
 				<!-- 我的帖子 -->
 				<div class="mt-4">
@@ -101,8 +101,8 @@
 						</li>
 					</ul>
 					<!-- 分页 -->
-					<nav class="mt-5">
-						<ul class="pagination justify-content-center" th:replace="index::pagination">
+					<nav class="mt-5" th:replace="index::pagination">
+						<ul class="pagination justify-content-center">
 							<li class="page-item"><a class="page-link" href="#">首页</a></li>
 							<li class="page-item disabled"><a class="page-link" href="#">上一页</a></li>
 							<li class="page-item active"><a class="page-link" href="#">1</a></li>

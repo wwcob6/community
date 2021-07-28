@@ -2,6 +2,7 @@ package com.sys.community.controller;
 
 
 import com.sys.community.annotation.LoginRequired;
+import com.sys.community.entity.Comment;
 import com.sys.community.entity.DiscussPost;
 import com.sys.community.entity.Page;
 import com.sys.community.entity.User;
@@ -182,11 +183,10 @@ public class UserController implements CommunityConstant {
         return "/site/profile";
     }
     @RequestMapping(path = "/profile/{userId}/post", method = RequestMethod.GET)
-    public String getMypost(Model model, Page page, @PathVariable("userId") int userId,
-                            @RequestParam(name = "orderMode", defaultValue = "1") int orderMode) {
+    public String getMypost(Model model, Page page, @PathVariable("userId") int userId) {
         // 方法调用钱，springmvc会自动实例化model和page，并将page注入model
         page.setRows(discussPostService.findDiscussPostRows(userId));
-        page.setPath("/index/" + userId + "/post?orderMode=" + orderMode);
+        page.setPath("/user/profile/" + userId + "/post");
         User userr = userService.findUserById(userId);
         List<DiscussPost> list = discussPostService.findDiscussPost(userId, page.getOffset(), page.getLimit(), 0);
         List<Map<String, Object>> discussPosts = new ArrayList<>();
@@ -208,37 +208,35 @@ public class UserController implements CommunityConstant {
         // 用户
         model.addAttribute("user", userr);
         model.addAttribute("discussPosts",discussPosts);
-        model.addAttribute("orderMode", orderMode);
         return "/site/my-post";
     }
     @RequestMapping(path = "/profile/{userId}/comment", method = RequestMethod.GET)
-    public String getMyComment(Model model, Page page, @PathVariable("userId") int userId,
-                            @RequestParam(name = "orderMode", defaultValue = "2") int orderMode) {
+    public String getMyComment(Model model, Page page, @PathVariable("userId") int userId) {
         // 方法调用钱，springmvc会自动实例化model和page，并将page注入model
-        page.setRows(commentService.findCountByEntity(ENTITY_TYPE_POST, userId));
-        page.setPath("/index/" + userId + "/comment?orderMode=" + orderMode);
+        page.setRows(commentService.findCommentCountByUserId(userId));
+        page.setPath("/user/profile/" + userId + "/comment");
         User userr = userService.findUserById(userId);
-        List<DiscussPost> list = discussPostService.findDiscussPost(userId, page.getOffset(), page.getLimit(), 0);
+        List<Comment> list = commentService.findCommentsByUserId(userId,page.getOffset(), page.getLimit());
         List<Map<String, Object>> discussPosts = new ArrayList<>();
         if (list != null){
-            for (DiscussPost discussPost : list){
-                Map<String, Object> map = new HashMap<>();
-                map.put("post", discussPost);
-                User user = userService.findUserById(discussPost.getUserId());
-                map.put("user", user);
+            for (Comment comment : list){
+                DiscussPost discussPost = discussPostService.findDiscussPostById(comment.getEntityId());
+                if (discussPost != null) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("comment", comment);
+                    map.put("discussPost", discussPost);
+                    long likeCount = likeService.findEntityLikeCount(ENTITY_TYPE_COMMENT, comment.getId());
+                    map.put("likeCount", likeCount);
 
-                long likeCount = likeService.findEntityLikeCount(ENTITY_TYPE_POST, discussPost.getId());
-                map.put("likeCount", likeCount);
-
-                discussPosts.add(map);
+                    discussPosts.add(map);
+                }
             }
         }
-        int postCount = discussPostService.findDiscussPostRows(userId);
-        model.addAttribute("postCount", postCount);
+        int commentCount = commentService.findCommentCountByUserId(userId);
+        model.addAttribute("commentCount", commentCount);
         // 用户
         model.addAttribute("user", userr);
-        model.addAttribute("discussPosts",discussPosts);
-        model.addAttribute("orderMode", orderMode);
-        return "/site/my-post";
+        model.addAttribute("comments",discussPosts);
+        return "/site/my-reply";
     }
 }
